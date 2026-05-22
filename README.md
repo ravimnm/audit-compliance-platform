@@ -1,216 +1,225 @@
 # Audit Compliance Platform
 
-A secure, multi-tenant audit logging system built to track user actions with strong guarantees of integrity and isolation.
+A secure, multi-tenant audit logging system focused on **log integrity verification using hash chaining under a defined threat model**.
 
-Unlike basic logging systems, this platform ensures that audit logs cannot be modified silently using a hash chaining mechanism.
-
----
-
-## What Problem This Solves
-
-In real systems:
-- Logs can be altered by admins or attackers
-- No guarantee of integrity
-- Difficult to trace actions across tenants
-
-This system solves:
-- Tampering detection
-- Secure user attribution
-- Tenant isolation
+This project demonstrates how backend systems can **detect tampering in audit logs**, rather than falsely claiming to prevent it.
 
 ---
 
-## Core Features
+## 🚀 Features
 
-- JWT Authentication (stateless security)
-- Role-Based Access Control (ADMIN / USER)
-- Multi-tenant isolation (each tenant sees only their data)
-- Audit log creation for every action
-- Filtering (actor, action, date range)
-- Pagination and sorting
+- JWT-based authentication
+- Role-Based Access Control (RBAC)
+- Multi-tenant isolation via context
+- Audit log creation (server-controlled identity)
+- Hash chaining for integrity linkage
+- External integrity anchor (file-based)
+- Tampering detection API
+- Pagination, filtering, sorting
 - CSV export
-- Hash chaining for tamper detection
-- Integrity verification API
-- Swagger for API testing
+- Swagger + Postman testing
 
 ---
 
-## Key Concept: Hash Chaining
+## 🧠 Core Concept: Integrity Model
 
 Each log stores:
 
-- hash (current record hash)
-- previousHash (hash of previous record)
+- hash
+- previousHash
 
-Flow:
+Hash computation:
 
-Log1 -> Log2 -> Log3 -> Log4
+H(n) = SHA256(H(n-1) + data)
 
-Each hash depends on previous:
+Where data includes:
 
-hash(n) = SHA256(previousHash + data)
-
----
-
-## Why This Matters
-
-If someone modifies a record:
-
-Example:
-
-Log2 is changed
-
-Then:
-
-- hash(Log2) changes
-- Log3.previousHash no longer matches
-- Entire chain breaks
-
-System detects:
-
-Tampering detected
+- actorId
+- role
+- tenantId
+- action
+- timestamp
 
 ---
 
-## Architecture
+## 🔗 Chain Behavior
 
-Controller -> DTO -> Service -> Specification -> Repository -> Database  
-                ↓  
-         Security Layer (JWT + RBAC)  
-                ↓  
-         Tenant Context  
+Log1 → Log2 → Log3 → ...
 
----
+If any log is modified:
 
-## Security Design
-
-- User identity comes from JWT (not request body)
-- Tenant is derived internally (cannot be spoofed)
-- Role is embedded in token
-
-Prevents:
-- Fake user injection
-- Cross-tenant data access
-- Privilege escalation
+- All subsequent hashes become invalid
+- Verification fails deterministically
 
 ---
 
-## Tech Stack
+## 🔐 Threat Model
+
+### System Detects:
+
+- Application-level log modification
+- Accidental corruption
+- Database-level tampering (single record changes)
+
+### System Does NOT Protect Against:
+
+- Full database rewrite with recomputation
+- Compromised application server
+- Secret key compromise
+- External anchor deletion or overwrite
+
+---
+
+## 🏗️ Architecture
+
+Controller → DTO → Service → Repository → Database  
+             ↓  
+     Security (JWT + RBAC)  
+             ↓  
+     Tenant Context (ThreadLocal)
+
+---
+
+## ⚙️ Tech Stack
 
 - Java 21
 - Spring Boot
 - Spring Security
-- Spring Data JPA (Hibernate)
+- Spring Data JPA
 - PostgreSQL
 - JWT (jjwt)
 - Swagger (OpenAPI)
 
 ---
 
-## Setup Instructions
+## ⚙️ Setup
 
-1. Clone project
-
-git clone https://github.com/ravimnm/audit-compliance-platform.git  
-cd audit-compliance-platform  
+```bash
+git clone https://github.com/ravimnm/audit-compliance-platform.git
+cd audit-compliance-platform
+```
 
 ---
 
-2. Configure database
+## ⚙️ Configuration
 
-Edit application.properties:
+Configure application.properties:
 
 spring.datasource.url=jdbc:postgresql://localhost:5432/audit_platform  
 spring.datasource.username=postgres  
 spring.datasource.password=yourpassword  
+jwt.secret=your-secret-key  
 
 ---
 
-3. Run application
+## ▶️ Run
 
 mvn spring-boot:run  
 
 ---
 
-4. Open Swagger
+## 🔑 Authentication
 
-http://localhost:8080/swagger-ui/index.html  
+Generate token:
 
----
+GET /auth/token?userId=user1&role=ADMIN&tenantId=tenant_1  
 
-## Authentication Flow
+Use in requests:
 
-1. Generate token
-
-GET /auth/token?userId=user1  
-
-2. Use token in headers
-
-Authorization: Bearer <token>
+Authorization: Bearer <token>  
 
 ---
 
-## API Endpoints
+## 📌 APIs
 
-Create Audit Log  
+### Create Audit Log
+
 POST /audit/events  
 
-Get Logs  
+Body:
+
+{
+  ""action"": ""USER_LOGIN""
+}
+
+---
+
+### Get Logs
+
 GET /audit/events  
 
-Verify Integrity  
+Supports:
+
+- actorId  
+- action  
+- date range  
+- pagination  
+- sorting  
+
+---
+
+### Verify Integrity
+
 GET /audit/events/verify  
 
-Export CSV  
+---
+
+### Export Logs
+
 GET /audit/events/export  
 
 ---
 
-## Example Flow
+## 🧪 Tampering Simulation
 
-1. User logs in
-2. Token generated
-3. User performs action
-4. Audit log created
-5. Hash linked with previous log
-6. Chain grows
-7. Any modification -> detected
+1. Insert logs via API  
+2. Modify DB manually:
 
----
+UPDATE audit_logs SET action = 'HACKED' WHERE id = 1;  
 
-## Testing Strategy
+3. Call:
 
-Test using:
-- Swagger
-- Postman
+GET /audit/events/verify  
 
-Validate:
-- Authentication works
-- Logs are created correctly
-- Filters return correct data
-- Pagination works
-- Hash chain remains valid
-- Tampering is detected
+Expected:
+
+Tampering detected at log ID: 1  
 
 ---
 
-## Limitations
+## ⚠️ Limitations
 
-- Single node system (not distributed)
-- No async processing
-- Basic RBAC (can be extended)
-
----
-
-## Future Improvements
-
-- Async log processing (Kafka / queues)
-- Distributed audit system
-- Fraud detection layer
-- Advanced analytics
+- Not tamper-proof, only tamper-detectable  
+- No protection against full chain recomputation  
+- No digital signatures  
+- No append-only enforcement at DB level  
 
 ---
 
-## Author
+## 📈 Future Improvements
 
-https://github.com/ravimnm/
+- Append-only DB constraints (triggers)  
+- Digital signature support  
+- External hash anchoring (cloud/blockchain)  
+- Async logging via queue  
+- High-throughput ingestion optimization  
+
+---
+
+## 🧠 Key Takeaway
+
+This system focuses on:
+
+- Integrity verification  
+- Failure detection  
+- Clear trust boundaries  
+
+Not on unrealistic guarantees of absolute security.  
+
+---
+
+## 👨‍💻 Author
+
+Ravi Sankar Manem 
+
+"@ | Add-Content -Path README.md
