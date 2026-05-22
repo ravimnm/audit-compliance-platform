@@ -284,5 +284,3 @@ Not on unrealistic guarantees of absolute security.
 ## 👨‍💻 Author
 
 Ravi Sankar Manem 
-
-"@ | Add-Content -Path README.md
