@@ -196,6 +196,69 @@ Tampering detected at log ID: 1
 
 ---
 
+## ⚠️ Failure Handling
+
+The system is designed to fail safely and explicitly:
+
+- If authentication is missing → request is rejected  
+- If tenant context is absent → operation fails  
+- If hash mismatch occurs → verification stops immediately  
+- If integrity anchor is unavailable → verification reports failure  
+
+The system avoids silent failures to ensure audit trust.
+
+---
+
+## ⚡ Performance Characteristics
+
+### Write Path
+
+- Each log requires:
+  - Fetching last log (O(1) with index)
+  - Hash computation (constant time)
+- Potential bottleneck:
+  - Sequential dependency on previous hash
+  - Limits parallel write throughput
+
+### Read / Verification Path
+
+- Full verification is O(n)
+- Suitable for periodic audits, not per-request validation
+
+### Scaling Considerations
+
+- Index on (tenantId, timestamp)
+- Table partitioning for large datasets
+- Archival strategy for old logs
+
+---
+
+## 🧠 Why Hash Chain Instead of Merkle Tree?
+
+This system uses a **linear hash chain** instead of a Merkle Tree.
+
+### Advantages
+
+- Simple to implement
+- Easy to verify sequential integrity
+- Minimal storage overhead
+- Ideal for append-only logs
+
+### Trade-offs
+
+- Verification requires full scan (O(n))
+- No partial verification like Merkle Trees
+- Sequential dependency limits concurrency
+
+### Why chosen here?
+
+The goal is:
+
+- Demonstrate integrity linkage clearly
+- Keep system simple and understandable
+- Focus on audit semantics rather than cryptographic optimization
+
+---
 ## 📈 Future Improvements
 
 - Append-only DB constraints (triggers)  
