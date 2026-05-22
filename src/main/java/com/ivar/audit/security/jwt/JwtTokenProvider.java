@@ -17,15 +17,15 @@ public class JwtTokenProvider {
 	@Value("${jwt.secret}")
 	private String SECRET;
 	
-	public String generateToken(String userId) {
-		return Jwts.builder()
-				.setSubject(userId)
-				.claim("role", "ADMIN")
-				.claim("tenantId", "tenant_1")
-				.setIssuedAt(new Date())
-				.setExpiration(new Date(System.currentTimeMillis()+86400000))
-				.signWith(getSigningKey())
-				.compact();
+	public String generateToken(String userId, String role, String tenantId) {
+	    return Jwts.builder()
+	            .setSubject(userId)
+	            .claim("role", role)
+	            .claim("tenantId", tenantId)
+	            .setIssuedAt(new Date())
+	            .setExpiration(new Date(System.currentTimeMillis() + 86400000))
+	            .signWith(getSigningKey())
+	            .compact();
 	}
 
 	private SecretKey getSigningKey() {

@@ -1,4 +1,8 @@
 package com.ivar.audit.modules.audit.service;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.List;
 
@@ -63,7 +67,8 @@ public class AuditLogService {
                 : "GENESIS";
 
         // Create deterministic data string
-        String data = userId + role + tenantId + req.action() + Instant.now().toString();
+        Instant now= Instant.now();
+        String data = userId + role + tenantId + req.action() + now.toString();
 
         String hash = HashUtil.sha256(previousHash + data);
 
@@ -72,13 +77,23 @@ public class AuditLogService {
         auditLog.setActorId(userId);
         auditLog.setActorRole(role);
         auditLog.setTenantId(tenantId);
-        auditLog.setTimestamp(Instant.now());
+        auditLog.setTimestamp(now);
         auditLog.setPreviousHash(previousHash);
         auditLog.setHash(hash);
         
-
         AuditLog savedLog = auditLogRepository.save(auditLog);
 
+
+        try {
+			Files.writeString(
+				    Path.of("integrity_anchor.txt"),
+				    savedLog.getHash(),
+				    StandardOpenOption.CREATE,
+				    StandardOpenOption.TRUNCATE_EXISTING
+				);
+		} catch (IOException e) {
+	        throw new RuntimeException("Failed to write integrity anchor", e);
+	    }
         return new AuditLogResponse(
                 savedLog.getId(),
                 savedLog.getActorId(),
@@ -166,11 +181,18 @@ public class AuditLogService {
     	}
     	
     	List<AuditLog> logs=auditLogRepository.findByTenantIdOrderByTimestampAsc(tenantId);
-    	
+    	if (logs.isEmpty()) {
+            return new AuditVerificationResponse(true, "No logs to verify");
+        }
     	String previousHash= "GENESIS";
     	
     	for(AuditLog log: logs) {
-    		String data = log.getAction()+log.getActorId()+log.getActorRole()+log.getTenantId()+log.getTimestamp().toString();
+    		String data = log.getActorId()
+                    + log.getActorRole()
+                    + log.getTenantId()
+                    + log.getAction()
+                    + log.getTimestamp().toString();
+    		
     		String recalculatedHash = HashUtil.sha256(previousHash+data);
     		if (!recalculatedHash.equals(log.getHash())) {
                 return new AuditVerificationResponse(
@@ -180,6 +202,24 @@ public class AuditLogService {
             }
     		previousHash = log.getHash();
     	}
+    	try {
+            String anchorHash = Files.readString(Path.of("integrity_anchor.txt"));
+
+            AuditLog lastLog = logs.get(logs.size() - 1);
+
+            if (!lastLog.getHash().equals(anchorHash)) {
+                return new AuditVerificationResponse(
+                        false,
+                        "Anchor mismatch: possible chain rewrite attack"
+                );
+            }
+
+        } catch (IOException e) {
+            return new AuditVerificationResponse(
+                    false,
+                    "Failed to read integrity anchor"
+            );
+        }
     	
     	return new AuditVerificationResponse(true,"Audit log is Valid");
     }

@@ -42,6 +42,7 @@ public class JwtFilter extends OncePerRequestFilter{
 	            String userId = jwtTokenProvider.getUserIdFromToken(token);
 	            String role = jwtTokenProvider.getRoleFromToken(token);
 	            String tenantId = jwtTokenProvider.gettenantIdFromToken(token);
+	            TenantContext.setTenant(tenantId);
 
 	            if (jwtTokenProvider.validateToken(token, userId)) {
 

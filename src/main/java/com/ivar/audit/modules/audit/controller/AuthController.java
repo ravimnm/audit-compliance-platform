@@ -16,9 +16,11 @@ public class AuthController {
     }
 
     @GetMapping("/auth/token")
-    public String getToken(@RequestParam String userId,
-                           @RequestParam(defaultValue = "USER") String role) {
-
-        return jwtTokenProvider.generateToken(userId); // role already hardcoded inside
+    public String getToken(
+            @RequestParam String userId,
+            @RequestParam(defaultValue = "USER") String role,
+            @RequestParam(defaultValue = "tenant_1") String tenantId
+    ) {
+        return jwtTokenProvider.generateToken(userId, role, tenantId);
     }
 }
