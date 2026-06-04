@@ -91,7 +91,24 @@ Controller → DTO → Service → Repository → Database
 - Swagger (OpenAPI)
 
 ---
+## Highlights
 
+✓ Multi-tenant architecture
+
+✓ JWT Authentication + RBAC
+
+✓ Hash-chain integrity verification
+
+✓ Dynamic filtering and pagination
+
+✓ CSV export
+
+✓ PostgreSQL persistence
+
+✓ Spring Security
+
+✓ OpenAPI documentation
+---
 ## ⚙️ Setup
 
 ```bash
