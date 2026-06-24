@@ -343,7 +343,7 @@ SMTAP acts as a centralized audit, integrity verification, and security telemetr
 
 | Project | Role |
 |----------|------|
-| [JRSA](https://github.com/ravimnm/jrsa) | JVM Runtime Security Agent that forwards runtime security events to SMTAP |
-| [Secure Finance Backend](https://github.com/ravimnm/<finance-repo>) | FinTech backend leveraging SMTAP for audit logging, compliance, and security event persistence |
+| [JRSA](https://github.com/ravimnm/java-runtime-security-agent) | JVM Runtime Security Agent that forwards runtime security events to SMTAP |
+| [Secure Finance Backend](https://github.com/ravimnm/secure-finance-backend) | FinTech backend leveraging SMTAP for audit logging, compliance, and security event persistence |
 
 SMTAP is designed to be application-agnostic and can serve as a shared audit backend for multiple enterprise systems.
