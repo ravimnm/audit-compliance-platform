@@ -25,14 +25,17 @@ import com.ivar.audit.modules.audit.dto.AuditLogResponse;
 import com.ivar.audit.modules.audit.dto.AuditVerificationResponse;
 import com.ivar.audit.modules.audit.repository.AuditLogRepository;
 import com.ivar.audit.modules.audit.repository.specification.AuditLogSpecification;
+import com.ivar.audit.modules.notification.NotificationService;
 
 @Service
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
+    private final NotificationService notificationService;
 
-    public AuditLogService(AuditLogRepository auditLogRepository) {
+    public AuditLogService(AuditLogRepository auditLogRepository, NotificationService notificationService) {
         this.auditLogRepository = auditLogRepository;
+        this.notificationService=notificationService;
     }
 
     public AuditLogResponse createAuditLog(AuditLogRequest req) {
@@ -64,7 +67,7 @@ public class AuditLogService {
 
         String previousHash = lastLog != null
                 ? lastLog.getHash()
-                : "GENESIS";
+                : "GENESIS"; 
 
         // Create deterministic data string
         Instant now= Instant.now();
@@ -195,6 +198,7 @@ public class AuditLogService {
     		
     		String recalculatedHash = HashUtil.sha256(previousHash+data);
     		if (!recalculatedHash.equals(log.getHash())) {
+                notificationService.sendAlert("Audit Tampering Detected", "Tampering detected at log ID: "+log.getId());
                 return new AuditVerificationResponse(
                         false,
                         "Tampering detected at log ID: " + log.getId()
@@ -203,11 +207,12 @@ public class AuditLogService {
     		previousHash = log.getHash();
     	}
     	try {
-            String anchorHash = Files.readString(Path.of("integrity_anchor.txt"));
+            String anchorHash = Files.readString(Path.of("integrity_anchor.txt")).trim();
 
             AuditLog lastLog = logs.get(logs.size() - 1);
 
             if (!lastLog.getHash().equals(anchorHash)) {
+                notificationService.sendAlert("Audit Anchor Mismatch","Possible chain rewrite attack detected");
                 return new AuditVerificationResponse(
                         false,
                         "Anchor mismatch: possible chain rewrite attack"

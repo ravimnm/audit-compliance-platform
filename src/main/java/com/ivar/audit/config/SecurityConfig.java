@@ -25,6 +25,7 @@ public class SecurityConfig{
 	            .csrf(csrf -> csrf.disable())
 	            .authorizeHttpRequests(auth -> auth
 	                    .requestMatchers(
+	                    		"/test-email",
 	                            "/v3/api-docs/**",
 	                            "/swagger-ui/**",
 	                            "/swagger-ui.html",
@@ -35,6 +36,15 @@ public class SecurityConfig{
 	            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 	            .build();
 	}
+//	@Bean
+//	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//	    return http
+//	            .csrf(csrf -> csrf.disable())
+//	            .authorizeHttpRequests(auth -> auth
+//	                    .anyRequest().permitAll()
+//	            )
+//	            .build();
+//	}
 	
 	@Bean
 	public BCryptPasswordEncoder passwordEncoder() {
