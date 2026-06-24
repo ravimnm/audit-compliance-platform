@@ -336,3 +336,14 @@ Tampering detected at log ID: 1
 **Ravi Sankar Manem**
 
 GitHub: https://github.com/ravimnm
+
+## 🔗 Ecosystem & Integrations
+
+SMTAP acts as a centralized audit, integrity verification, and security telemetry platform for multiple applications.
+
+| Project | Role |
+|----------|------|
+| [JRSA](https://github.com/ravimnm/jrsa) | JVM Runtime Security Agent that forwards runtime security events to SMTAP |
+| [Secure Finance Backend](https://github.com/ravimnm/<finance-repo>) | FinTech backend leveraging SMTAP for audit logging, compliance, and security event persistence |
+
+SMTAP is designed to be application-agnostic and can serve as a shared audit backend for multiple enterprise systems.
