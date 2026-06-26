@@ -347,3 +347,10 @@ SMTAP acts as a centralized audit, integrity verification, and security telemetr
 | [Secure Finance Backend](https://github.com/ravimnm/secure-finance-backend) | FinTech backend leveraging SMTAP for audit logging, compliance, and security event persistence |
 
 SMTAP is designed to be application-agnostic and can serve as a shared audit backend for multiple enterprise systems.
+
+# Secure Multi-Tenant Audit Platform
+
+![Build](https://github.com/ravimnm/audit-compliance-platform/actions/workflows/build.yml/badge.svg)
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-green)
+![License](https://img.shields.io/github/license/ravimnm/audit-compliance-platform)
